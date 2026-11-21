@@ -49,13 +49,24 @@ router.get("/", async (req, res) => {
   if (date !== undefined && !isRealDate(String(date))) {
     return res.status(400).json({ error: "Please choose a valid date." });
   }
-  const { rows } = await pool.query(
-    `SELECT ${COLUMNS} FROM readings
-     WHERE user_id = $1 AND ($2::date IS NULL OR reading_date = $2::date)
-     ORDER BY reading_date DESC, ${SLOT_ORDER}`,
-    [req.userId, date ?? null]
-  );
-  res.json({ readings: rows });
+  const page = req.query.page === undefined ? 1 : Number(req.query.page);
+  const limit = req.query.limit === undefined ? 20 : Number(req.query.limit);
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+    return res.status(400).json({ error: "page must be 1 or more and limit between 1 and 100." });
+  }
+  // Both queries filter by user_id from the token, so paging can never reach another user's rows.
+  const where = "user_id = $1 AND ($2::date IS NULL OR reading_date = $2::date)";
+  const [list, count] = await Promise.all([
+    pool.query(
+      `SELECT ${COLUMNS} FROM readings WHERE ${where}
+       ORDER BY reading_date DESC, ${SLOT_ORDER}, id DESC
+       LIMIT $3 OFFSET $4`,
+      [req.userId, date ?? null, limit, (page - 1) * limit]
+    ),
+    pool.query(`SELECT COUNT(*) FROM readings WHERE ${where}`, [req.userId, date ?? null]),
+  ]);
+  const total = Number(count.rows[0].count);
+  res.json({ readings: list.rows, page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) });
 });
 
 router.post("/", async (req, res) => {

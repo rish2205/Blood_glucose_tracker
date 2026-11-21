@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, fmtDate, SLOTS, todayStr } from './api'
 
+const PAGE_SIZE = 5
 const blank = () => ({ date: todayStr(), slot: 'morning', value: '' })
 
 export default function Readings() {
@@ -13,12 +14,20 @@ export default function Readings() {
 
   const [version, setVersion] = useState(0) // bump to reload the list
   const load = () => setVersion((v) => v + 1)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    api('/readings')
-      .then((d) => { setReadings(d.readings); setLoadError('') })
+    api(`/readings?page=${page}&limit=${PAGE_SIZE}`)
+      .then((d) => {
+        setTotalPages(d.totalPages)
+        // e.g. the last reading on the last page was deleted: step back to a page that exists
+        if (d.page > d.totalPages) return setPage(d.totalPages)
+        setReadings(d.readings)
+        setLoadError('')
+      })
       .catch((e) => { setLoadError(e.message); setReadings([]) })
-  }, [version])
+  }, [version, page])
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
@@ -33,7 +42,8 @@ export default function Readings() {
       })
       setForm(blank())
       setEditingId(null)
-      await load()
+      if (!editingId) setPage(1) // new readings sort first
+      load()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -112,6 +122,13 @@ export default function Readings() {
               ))}
             </tbody>
           </table>
+        )}
+        {readings?.length > 0 && (
+          <nav className="pager" aria-label="Pagination">
+            <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+            <span>Page {page} of {totalPages}</span>
+            <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          </nav>
         )}
       </section>
     </>

@@ -19,6 +19,7 @@ button.danger { color: #dc2626; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
 th, td { padding: 6px 8px; border-bottom: 1px solid #8883; }
 td.actions { text-align: right; white-space: nowrap; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 12px; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
 .stats div { text-align: center; }
 .stats dt { font-size: 0.8rem; color: #888; }
