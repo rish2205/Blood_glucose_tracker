@@ -50,9 +50,10 @@ npm test
 
 Slots: `morning`, `after_breakfast`, `after_lunch`, `after_dinner`.
 
-## Decisions worth knowing
+## notes
 
 - "Future" is judged by the server's local date.
+   - With more time, I would add login rate limiting, consider secure cookie      sessions, and improve deployment configuration.
 - When a day already has 4 readings, the "only 4 per day" message wins over the "slot already used" message
   (otherwise the 4-reading rule could never be shown, because 4 readings fill every slot).
 - The previous-month report is the whole month before the selected date's month.

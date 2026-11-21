@@ -7,7 +7,7 @@ const auth = require("./auth");
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: /^http:\/\/localhost:517[3-9]$/ }));
 app.use(express.json());
 
 app.get("/api/health", async (req, res) => {
