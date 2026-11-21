@@ -4,9 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test --test-concurrency=1",
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "db:init": "node src/scripts/init-db.js",
+    "db:create-test": "node src/scripts/create-test-db.js",
+    "db:init-test": "node src/scripts/init-db.js --test",
+    "seed": "node src/scripts/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +25,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.2"
   }
 }
