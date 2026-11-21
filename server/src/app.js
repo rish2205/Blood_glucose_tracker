@@ -21,6 +21,8 @@ app.get("/api/health", async (req, res) => {
 });
 
 app.use("/api/auth", auth.router);
+app.use("/api/readings", auth.requireAuth, require("./readings"));
+app.use("/api/reports", auth.requireAuth, require("./reports").router);
 
 app.use((err, req, res, next) => {
   if (err.type === "entity.parse.failed") return res.status(400).json({ error: "Invalid JSON." });
