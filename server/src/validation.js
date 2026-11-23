@@ -28,7 +28,7 @@ function validateReadingInput({ date, slot, value }) {
     return "Please enter a glucose value.";
   }
   const n = typeof value === "number" ? value : Number(String(value).trim());
-  if (!Number.isInteger(n) || n < 40 || n > 600) return "Value must be between 40 and 600 mg/dl.";
+  if (!Number.isInteger(n) || n < 40 || n > 600) return "Value must be a whole number between 40 and 600 mg/dl.";
   if (typeof date !== "string" || !isRealDate(date)) return "Please choose a valid date.";
   if (date > todayStr()) return "Date cannot be in the future.";
   if (!Object.hasOwn(SLOTS, slot)) return "Please choose a time slot.";

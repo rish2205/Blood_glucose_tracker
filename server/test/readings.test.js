@@ -13,10 +13,10 @@ test("each validation rule returns its message", async () => {
   const cases = [
     [{ ...ok, value: "" }, "Please enter a glucose value."],
     [{ ...ok, value: undefined }, "Please enter a glucose value."],
-    [{ ...ok, value: 39 }, "Value must be between 40 and 600 mg/dl."],
-    [{ ...ok, value: 601 }, "Value must be between 40 and 600 mg/dl."],
-    [{ ...ok, value: 120.5 }, "Value must be between 40 and 600 mg/dl."],
-    [{ ...ok, value: "abc" }, "Value must be between 40 and 600 mg/dl."],
+    [{ ...ok, value: 39 }, "Value must be a whole number between 40 and 600 mg/dl."],
+    [{ ...ok, value: 601 }, "Value must be a whole number between 40 and 600 mg/dl."],
+    [{ ...ok, value: 120.5 }, "Value must be a whole number between 40 and 600 mg/dl."],
+    [{ ...ok, value: "abc" }, "Value must be a whole number between 40 and 600 mg/dl."],
     [{ ...ok, date: dayOffset(1) }, "Date cannot be in the future."],
   ];
   for (const [body, message] of cases) {
