@@ -1,142 +1,70 @@
-# Sweety – Blood Glucose Tracker
+Sweety — Blood Glucose Tracker
 
-Sweety lets a user record up to four blood glucose readings per day and view daily, month-to-date, and previous-month reports.
+Sweety helps a user record blood glucose readings and see daily and monthly summaries. I built it with React (Vite), Express, and PostgreSQL.
 
-- Frontend: React and Vite (`client/`)
-- Backend: Node.js and Express (`server/`)
-- Database: PostgreSQL
-- Authentication: bcrypt password hashes and JWTs
+What it does
 
-## Prerequisites
+Sign up and log in with an email and password. Passwords are hashed with bcrypt.
 
-Install Node.js, npm, and PostgreSQL. Create a PostgreSQL login that can access the Sweety databases.
+Add, view, edit, and delete readings. Each user can see only their own data.
 
-## Installation and database setup
+Record up to four readings per day: Morning (fasting), After breakfast, After lunch, and After dinner.
 
-From the project root, install dependencies:
+View daily, month-to-date, and previous-month reports showing the highest, lowest, average, and number of readings. The daily report also lists the individual readings.
 
-```sh
+Move through readings using pagination.
+
+The app checks for missing values, values outside 40–600 mg/dl, future dates, and duplicate slots. Errors appear on the page.
+
+Set up locally
+
+You need Node.js/npm and PostgreSQL.
+
+Install dependencies in the project root, then in server and client:
+
 npm install
 cd server
 npm install
 cd ../client
 npm install
-```
 
-Copy `server/.env.example` to `server/.env`. On Windows Command Prompt, from the project root:
+In pgAdmin, create a PostgreSQL login and a database named sweety_db owned by that login. You can use another name if you set it in the next step.
 
-```cmd
-copy server\.env.example server\.env
-```
+Copy server/.env.example to server/.env. Set PGUSER, PGPASSWORD, and PGDATABASE for your database, and set a random JWT_SECRET of at least 32 characters. Keep .env private; it is ignored by Git.
 
-Edit `server/.env` with your local PostgreSQL username and password and a random `JWT_SECRET` of at least 32 characters. Never commit `.env`.
+From the server folder, create the tables:
 
-In pgAdmin, create two databases owned by the configured PostgreSQL user:
-
-- `sweety_db` for the app
-- `sweety_db_test` for integration tests
-
-If you use different names, update `PGDATABASE` and `PGDATABASE_TEST` in `server/.env`. Initialize the development database:
-
-```sh
-cd server
 npm run db:init
-```
 
-## Run the app
+Run it
 
-From the project root, start the API and UI together:
+From the project root, run npm run dev. This starts the API and the React client. Open the Local URL printed by Vite (usually http://localhost:5173). The API runs on http://localhost:3001; its health check is /api/health.
 
-```sh
-npm run dev
-```
+You can also run npm run dev separately inside server and client in two terminals. Press Ctrl+C to stop them. If you change the API address, set VITE_API_URL for the client and update the allowed origin in server/src/app.js.
 
-Alternatively, use two terminals. In the first:
+Demo account and tests
 
-```sh
-cd server
-npm run dev
-```
+After npm run db:init, run npm run seed from server to create local sample data. Sign in with demo@sweety.local and Demo@12345. Running the seed script again resets this demo account's readings.
 
-In the second:
+For backend tests, create a separate PostgreSQL database named sweety_db_test, set PGDATABASE_TEST in server/.env if you used a different name, and run these commands from server:
 
-```sh
-cd client
-npm run dev
-```
-
-Open the **Local** URL printed by Vite, usually `http://localhost:5173/`. If that port is in use, Vite may choose another port. The API health check is at `http://localhost:3001/api/health`; the API does not serve a webpage at `http://localhost:3001/`.
-
-## Demo data
-
-After initializing `sweety_db`, run this from `server/`:
-
-```sh
-npm run seed
-```
-
-The script creates the local demo user `demo@sweety.local` with password `Demo@12345` and sample readings. Running the seed again replaces **that demo user’s readings**. These are fake credentials for local demonstration only.
-
-## Tests and checks
-
-Tests use `sweety_db_test`. Create that database in pgAdmin with your configured PostgreSQL user as owner. Then, from `server/`, run:
-
-```sh
 npm run db:init-test
 npm test
-```
 
-The integration tests reset tables in the **test database**. They refuse to run against a database whose name does not end in `_test`. If your PostgreSQL user has permission to create databases, `npm run db:create-test` can create the test database.
+Tests use the test database, so the development readings are kept separate. To check the frontend, run npm run lint and npm run build from client.
 
-From `client/`, run:
+How it fits together
 
-```sh
-npm run lint
-npm run build
-```
+client/src/AuthForm.jsx sends sign-up and login requests to the Express API. The server stores a password hash and returns a signed token. The client sends that token when requesting readings or reports. On the server, authentication identifies the user, and the database queries use that user ID to keep accounts separate. server/db/schema.sql defines the tables and their constraints.
 
-## Features
+The main API routes are /api/auth/register, /api/auth/login, /api/readings, and /api/reports. Readings support adding, listing, editing, and deleting. The reports route accepts a selected date using ?date=YYYY-MM-DD.
 
-Users can register, log in, and add, view, edit, or delete **only their own** readings. Each date supports one reading in each of four slots: Morning (fasting), After breakfast, After lunch, and After dinner.
+Notes
 
-A glucose value is required and must be a whole number from 40 to 600 mg/dl. A date cannot be in the future. The UI displays validation messages and friendly empty states.
+Month-to-date starts on the first of the selected month and ends on the selected date. “Previous month” means the full calendar month before it.
 
-Reports show the highest, lowest, average rounded to one decimal place, and number of readings. The daily report also lists the readings and their slots:
+The server uses its local date to reject future readings.
 
-- **Daily:** selected date
-- **Month-to-date:** first day of the selected month through the selected date
-- **Previous month:** the entire calendar month before the selected date’s month
+Once all four daily slots are filled, the four-per-day error appears before the duplicate-slot error.
 
-The optional pagination feature displays five readings per page in the UI.
-
-## API
-
-Reading and report routes require an `Authorization: Bearer <token>` header.
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| POST | `/api/auth/register` | Register with name, email, and password |
-| POST | `/api/auth/login` | Log in and receive a token |
-| GET | `/api/auth/me` | Check the current session |
-| GET, POST | `/api/readings` | List or add readings |
-| PUT, DELETE | `/api/readings/:id` | Edit or delete an owned reading |
-| GET | `/api/reports?date=YYYY-MM-DD` | Get the three reports |
-
-`GET /api/readings?page=1&limit=20` supports pagination. `GET /api/readings?date=YYYY-MM-DD` optionally filters readings by date.
-
-## Project flow
-
-The React client sends requests through `client/src/api.js` to the Express API. During registration, the server hashes the password with bcrypt. During login, it checks the password and issues a JWT. Later requests send that token to the authentication middleware, which identifies the user.
-
-`server/src/readings.js` validates reading changes and queries PostgreSQL using the authenticated user’s ID. `server/src/reports.js` calculates the report date ranges and aggregates that user’s readings. The table definitions and database constraints are in `server/db/schema.sql`.
-
-## Notes
-
-- The server’s local calendar date determines whether a selected date is in the future.
-- When all four slots are occupied, the four-readings-per-day message takes precedence over the duplicate-slot message.
-- JWTs expire after seven days and are stored in the browser’s `localStorage`.
-- With more time, I would add login rate limiting, consider secure cookie sessions, and improve deployment configuration.
-
-## Submission demo
-
-Screenshots or a 2–3 minute screen recording accompany the submission email. The demo shows login, adding or editing a reading, a validation message, reports, and pagination.
+The token expires after seven days and is stored in browser localStorage. With more time, I would improve session storage, add login rate limiting, and prepare the app for deployment.
